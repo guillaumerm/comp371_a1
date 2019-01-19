@@ -20,10 +20,84 @@ using namespace std;
 const GLuint WIDTH = 800, HEIGHT = 800;
 GLFWwindow *window;
 
+//Struct that contains all variables related to the camera.
+struct {
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, -3.0f);
+	glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 euler_angles = glm::vec3(0.0f, -90.0f, 0.0f);
+	float fov = 45.0f;
+
+	glm::vec3 right() {
+		return glm::normalize(glm::cross(this->front, this->up));
+	}
+} camera;
+
 // Is called whenever a key is pressed/released via GLFW
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
+	if (key == GLFW_KEY_W) {
+		printf("[Log]Moving forward\n");
+		camera.position += camera.front;
+	}
+	else if (key == GLFW_KEY_S) {
+		printf("[Log]Moving backwards\n");
+		camera.position -= camera.front;
+	}
+	else if (key == GLFW_KEY_A) {
+		printf("[Log]Moving left\n");
+		camera.position += camera.right();
+	}
+	else if (key == GLFW_KEY_D) {
+		printf("[Log]Moving right\n");
+		camera.position -= camera.right();
+	}
+	else if (key == GLFW_KEY_UP) {
+		printf("[Log]Rotating up\n");
+		camera.euler_angles.x -= 1.0f;
+	}
+	else if (key == GLFW_KEY_DOWN) {
+		printf("[Log]Rotating down\n");
+		camera.euler_angles.x += 1.0f;
+	}
+	else if (key == GLFW_KEY_RIGHT) {
+		printf("[Log]Rotating right\n");
+		camera.euler_angles.y -= 1.0f;
+	}
+	else if (key == GLFW_KEY_LEFT) {
+		printf("[Log]Rotating right\n");
+		camera.euler_angles.y += 1.0f;
+	}
 	std::cout << key << std::endl;	
+}
+
+static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	//Keeps the previsou ypos of the cursor
+	static double prev_ypos = -1;
+
+	//Initialize the prev_ypos
+	prev_ypos = (prev_ypos == -1) ? ypos : prev_ypos;
+
+	//Move into/out of the scene only when GLFW_MOUSE_BUTTON_LEFT is press
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		if (prev_ypos - ypos > 0) {
+			printf("[Log]Moving into the scene\n");
+			camera.fov -= 0.1f;
+		}
+		else if (prev_ypos - ypos < 0) {
+			printf("[Log]Moving out of the scene\n");
+			camera.fov += 0.1f;
+		} else{
+			printf("[Log]Camera is stationary\n");
+		}
+	}
+	
+	prev_ypos = ypos;
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
 }
 
 int init() {
@@ -47,6 +121,11 @@ int init() {
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	//Define the depth buffer and enable it
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	glewExperimental = GL_TRUE;
 
@@ -64,6 +143,7 @@ int main()
 		return EXIT_FAILURE;
 	// Set the required callback functions
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
 
 	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
 	glewExperimental = GL_TRUE;
@@ -74,6 +154,8 @@ int main()
 		return -1;
 	}
 
+
+
 	// Build and compile our shader program
 	// Vertex shader
 
@@ -83,7 +165,7 @@ int main()
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> UVs;
-	loadOBJ("cube.obj", vertices, normals, UVs); //read the vertices from the cube.obj file
+	loadOBJ("cat.obj", vertices, normals, UVs); //read the vertices from the cat.obj file
 
 	GLuint VAO, VBO;
 	glGenVertexArrays(1, &VAO);
@@ -106,7 +188,6 @@ int main()
 
 	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs), remember: do NOT unbind the EBO, keep it bound to this VAO
 
-
 	// Game loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -116,10 +197,33 @@ int main()
 		// Render
 		// Clear the colorbuffer
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shader);
+
+		//Building a perspective view
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 projection = glm::mat4(1.0f);
+
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		camera.front.x = cos(glm::radians(camera.euler_angles.x)) * cos(glm::radians(camera.euler_angles.y));
+		camera.front.y = cos(glm::radians(camera.euler_angles.x));
+		camera.front.z = cos(glm::radians(camera.euler_angles.z)) * sin(glm::radians(camera.euler_angles.y));
+
+		view = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
+
+		projection = glm::perspective(glm::radians(camera.fov), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+
+		int modelLoc = glGetUniformLocation(shader, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc = glGetUniformLocation(shader, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		int projectionLoc = glGetUniformLocation(shader, "projection");
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_POINTS, 0, vertices.size());
 		glBindVertexArray(0);
 
 		// Swap the screen buffers
