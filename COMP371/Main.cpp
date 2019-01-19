@@ -33,42 +33,78 @@ struct {
 	}
 } camera;
 
+struct {
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+} object;
+
 // Is called whenever a key is pressed/released via GLFW
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
 	if (key == GLFW_KEY_W) {
-		printf("[Log]Moving forward\n");
 		camera.position += camera.front;
+		printf("[Log]Moving forward\n");
 	}
 	else if (key == GLFW_KEY_S) {
-		printf("[Log]Moving backwards\n");
 		camera.position -= camera.front;
+		printf("[Log]Moving backwards\n");
 	}
 	else if (key == GLFW_KEY_A) {
-		printf("[Log]Moving left\n");
 		camera.position += camera.right();
+		printf("[Log]Moving left\n");
 	}
 	else if (key == GLFW_KEY_D) {
-		printf("[Log]Moving right\n");
 		camera.position -= camera.right();
+		printf("[Log]Moving right\n");
 	}
 	else if (key == GLFW_KEY_UP) {
-		printf("[Log]Rotating up\n");
 		camera.euler_angles.x -= 1.0f;
+		printf("[Log]Rotating up (angle = %f)\n", camera.euler_angles.x);
 	}
 	else if (key == GLFW_KEY_DOWN) {
-		printf("[Log]Rotating down\n");
 		camera.euler_angles.x += 1.0f;
+		printf("[Log]Rotating down (angle = %f)\n", camera.euler_angles.x);
 	}
 	else if (key == GLFW_KEY_RIGHT) {
-		printf("[Log]Rotating right\n");
-		camera.euler_angles.y -= 1.0f;
+		camera.euler_angles.y += 1.0f;
+		printf("[Log]Rotating right (angle = %f)\n", camera.euler_angles.y);
 	}
 	else if (key == GLFW_KEY_LEFT) {
-		printf("[Log]Rotating right\n");
-		camera.euler_angles.y += 1.0f;
+		camera.euler_angles.y -= 1.0f;
+		printf("[Log]Rotating left (angle = %f)\n", camera.euler_angles.y);
 	}
-	std::cout << key << std::endl;	
+	else if (key == GLFW_KEY_J) {
+		object.position.x += 1.0f;
+		printf("[Log]Moving object on +X (X = %f)\n", object.position.x);
+	}
+	else if (key == GLFW_KEY_L) {
+		object.position.x -= 1.0f;
+		printf("[Log]Moving object on -X (X = %f)\n", object.position.x);
+	}
+	else if (key == GLFW_KEY_I) {
+		object.position.y += 1.0f;
+		printf("[Log]Moving object on +Y (X = %f)\n", object.position.y);
+	}
+	else if (key == GLFW_KEY_K) {
+		object.position.y -= 1.0f;
+		printf("[Log]Moving object on -Y (X = %f)\n", object.position.y);
+	}
+	else if (key == GLFW_KEY_PAGE_UP) {
+		object.position.z += 1.0f;
+		printf("[Log]Moving object on +Z (X = %f)\n", object.position.z);
+	}
+	else if (key == GLFW_KEY_PAGE_DOWN) {
+		object.position.z -= 1.0f;
+		printf("[Log]Moving object on -Z (X = %f)\n", object.position.z);
+	}
+	else if (key == GLFW_KEY_O) {
+		object.scale.x = object.scale.y = object.scale.z *= 1.10f;
+		printf("[Log]Scaling object by a factor of 10% (scale = %f\%)\n", object.scale.x);
+	}
+	else if (key == GLFW_KEY_P) {
+		object.scale.x = object.scale.y = object.scale.z *= 0.9f;
+		printf("[Log]Scaling object by a factor of -10% (scale = %f\%)\n", object.scale.x);
+	}
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -206,10 +242,13 @@ int main()
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
 
-		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		camera.front.x = cos(glm::radians(camera.euler_angles.x)) * cos(glm::radians(camera.euler_angles.y));
 		camera.front.y = cos(glm::radians(camera.euler_angles.x));
 		camera.front.z = cos(glm::radians(camera.euler_angles.z)) * sin(glm::radians(camera.euler_angles.y));
+
+
+		model = glm::translate(model, object.position);
+		model = glm::scale(model, object.scale);
 
 		view = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
 
