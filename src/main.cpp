@@ -185,6 +185,7 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 	prev_ypos = ypos;
 }
 
+// Taken from https://learnopengl.com/ (https://learnopengl.com/code_viewer_gh.php?code=src/1.getting_started/6.3.coordinate_systems_multiple/coordinate_systems_multiple.cpp) Not really used in this assignment.
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
