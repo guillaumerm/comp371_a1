@@ -57,13 +57,15 @@ struct {
 	}
 } camera;
 
+//Struct that contains all variables and behaviors related to the object
 struct {
-	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	float pitch = 0.0f;
-	float yaw = 0.0f;
-	float roll = 0.0f;
+	glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f); /*!< Position of the object */
+	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f); /*!< Current scale of the object */
+	float pitch = 0.0f; /*!< Current pitch of the object */
+	float yaw = 0.0f; /*!< Current yuw of the object */
+	float roll = 0.0f; /*!< Current roll of the object */
 
+	//! Reset the object to its initial configurations.
 	void reset() {
 		position = glm::vec3(0.0f, 0.0f, 0.0f);
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -296,6 +298,7 @@ int main()
 		// Constructing the ctm (camera transformation matrix)
 		
 		model = glm::scale(model, object.scale);
+		// Construct the model_rotation matrix
 		glm::mat4 model_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(object.roll), glm::vec3(0,0,1))*glm::rotate(glm::mat4(1.0f), glm::radians(object.yaw), glm::vec3(0, 1, 0))* glm::rotate(glm::mat4(1.0f), glm::radians(object.pitch), glm::vec3(1,0,0));
 		model *= model_rotation;
 		model = glm::translate(model, object.position);
