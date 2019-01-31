@@ -173,12 +173,10 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 	//Move into/out of the scene (assumed that means chaning fov) only when GLFW_MOUSE_BUTTON_LEFT is press
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 		double ypos_delta = prev_ypos - ypos;
-		// If ypos_delta < 0 then zooming in if ypos_delta > 0 zooming out
-		if(ypos_delta < 0) {
-			camera.fov += 0.1f;
-		} else if (ypos_delta > 0) {
-			camera.fov -= 0.1f;
-		}
+		// Move the camera in/out of the scene proportionally.
+		camera.position.x += camera.front.x * (ypos_delta / 10.0f);
+		camera.position.y += camera.front.y * (ypos_delta / 10.0f);
+		camera.position.z += camera.front.z * (ypos_delta / 10.0f);
 	}
 	
 	// Keeping track of ypos
